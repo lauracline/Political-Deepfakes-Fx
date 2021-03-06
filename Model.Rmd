@@ -9,3 +9,358 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Load and Clean Data  
+
+```{r}
+## Load Libraries ##
+
+library(optparse)
+library(tidyverse)
+library(ggplot2)
+library(broom)
+library(stargazer)
+```
+
+```{r}
+rm(list=ls())
+load("deepfake.Rdata")
+
+if (!file.exists("tables_exploratory")) {
+    system("mkdir tables_exploratory")
+}
+if (!file.exists("figures_exploratory")) {
+    system("mkdir figures_exploratory")
+}
+
+COVARS <- c("educ", "meta_OS", "age_65", "PID", "crt", "gender", "polknow", 
+            "internet_usage", "ambivalent_sexism")
+```
+
+```{r}
+arg_list <- list(     
+    make_option(c("--response_quality"), type="character", default="all", 
+        help="Which quality of responses to condition on.",
+        metavar="response_quality"),
+    # make_option(c("--weight"), type="numeric", default=0,
+    #             help="Use weights?",
+    #             metavar="weight"),
+    make_option(c("--show_pdfs"), type="numeric", default=0,
+                help="Show PDFs in real time?",
+                metavar="show_pdfs")
+)
+ARGS <- parse_args(OptionParser(option_list=arg_list))
+
+SHOW_PDFS <- ARGS$show_pdfs
+
+dat$lowq <- FALSE
+dat$lowq[dat$quality_pretreat_duration_tooquick | dat$quality_pretreat_duration_tooslow | dat$quality_demographic_mismatch] <- TRUE
+```
+
+# Original Model 
+
+```{r}
+
+#####------------------------------------------------------#
+##### Experiment 1: Non-parametric tests ####
+#####------------------------------------------------------#
+
+## deception
+t.test(na.omit(dat$believed_true[dat$treat_fake_video == 1]), 
+       na.omit(dat$believed_true[dat$treat_fake_audio == 1])) ##t = -1.9296, df = 1767.1, p-value = 0.05382, \delta = -0.119805
+
+t.test(na.omit(dat$believed_true[dat$treat_fake_video == 1]), 
+       na.omit(dat$believed_true[dat$treat_fake_text == 1])) ##t = -1.2151, df = 1761.7, p-value = 0.2245, \delta = -0.075769
+
+t.test(na.omit(dat$believed_true[dat$treat_fake_video == 1]), 
+       na.omit(dat$believed_true[dat$treat_skit == 1])) ##t = 8.4754, df = 1083.9, p-value < 2.2e-16, \delta = 0.653852
+
+## affect
+t.test(na.omit(dat$post_favor_Warren[dat$treat_fake_video == 1]), 
+       na.omit(dat$post_favor_Warren[dat$treat_fake_audio == 1])) ##t = -1.647, df = 1802.3, p-value = 0.09974, \delta = -2.64796
+
+t.test(na.omit(dat$post_favor_Warren[dat$treat_fake_video == 1]), 
+       na.omit(dat$post_favor_Warren[dat$treat_fake_text == 1])) ##t = -1.8447, df = 1794.4, p-value = 0.06525, \delta = -2.94543
+
+t.test(na.omit(dat$post_favor_Warren[dat$treat_fake_video == 1]), 
+       na.omit(dat$post_favor_Warren[dat$treat_skit == 1])) ##t = -1.0868, df = 1793.6, p-value = 0.2773, \delta = -1.72203
+
+t.test(na.omit(dat$post_favor_Warren[dat$treat_fake_video == 1]), 
+       na.omit(dat$post_favor_Warren[dat$treat_attackad == 1])) ##t = -0.13861, df = 1787.2, p-value = 0.8898, \delta = -0.22528
+
+t.test(na.omit(dat$post_favor_Warren[dat$treat_fake_video == 1]), 
+       na.omit(dat$post_favor_Warren[dat$treat_control == 1])) ##t = -2.793, df = 1767.1, p-value = 0.005278, \delta = -4.53598
+
+## info
+t.test(dat$believed_true[dat$exp_1_prompt_info],
+       dat$believed_true[dat$exp_1_prompt_control]) ##t = -6.8445, df = 4177.9, p-value = 8.79e-12, \delta = -0.284111
+
+t.test(dat$believed_true[dat$exp_1_prompt_info & dat$treat_fake_video],
+       dat$believed_true[dat$exp_1_prompt_control & dat$treat_fake_video]) ##t = -3.918, df = 853.94, p-value = 9.641e-05, \delta = -0.354745
+
+## heterogeneity by age
+t.test(dat$post_favor_Warren[dat$age_65 == ">65"],
+       dat$post_favor_Warren[dat$age_65 == "<=65"]) ##t = -5.7333, df = 4698, p-value = 1.047e-08, \delta = -5.42
+
+## heterogeneity by medium within age
+t.test(dat$post_favor_Warren[dat$age_65 == ">65" & dat$treat_fake_video==1],
+       dat$post_favor_Warren[dat$age_65 == ">65" & dat$treat_fake_text==1]) ##t = -1.4803, df = 771.99, p-value = 0.1392, \delta = -3.81
+
+## heterogeneity by sexism
+t.test(dat$believed_true[dat$ambivalent_sexism <= 2.33],
+       dat$believed_true[dat$ambivalent_sexism > 3.66]) ##t = -7.9801, df = 1250.3, p-value = 3.284e-15, \delta = -0.558898
+
+t.test(dat$post_favor_Warren[dat$ambivalent_sexism <= 2.33],
+       dat$post_favor_Warren[dat$ambivalent_sexism > 3.66]) ##t = 17.772, df = 1525.8, p-value < 2.2e-16, \delta = -25.9583
+
+## heterogeneity by medium within sexism
+t.test(dat$believed_true[dat$ambivalent_sexism > 3.66 & dat$treat_fake_video==1],
+       dat$believed_true[dat$ambivalent_sexism > 3.66 & dat$treat_fake_audio==1]) ##t = 1.122, df = 276.71, p-value = 0.2628, \delta = 0.180147
+
+t.test(dat$post_favor_Warren[dat$ambivalent_sexism > 3.66 & dat$treat_fake_video==1],
+       dat$post_favor_Warren[dat$ambivalent_sexism > 3.66 & dat$treat_fake_audio==1]) ##t = -2.0674, df = 277.91, p-value = 0.03962, \delta = -8.41421
+
+## heterogeneity by PID
+t.test(dat$believed_true[dat$PID=="Democrat"],
+       dat$believed_true[dat$PID=="Republican"]) ##t = -13.771, df = 3621.7, p-value < 2.2e-16, \delta = -0.60564
+
+t.test(dat$post_favor_Warren[dat$PID=="Democrat"],
+       dat$post_favor_Warren[dat$PID=="Republican"]) ##t = 53.531, df = 4753, p-value < 2.2e-16, \delta = -42.58104
+
+## heterogeneity by polknow
+t.test(dat$believed_true[dat$polknow <= 0.5],
+       dat$believed_true[dat$polknow > 0.5]) ##t = 0.10765, df = 1115.6, p-value = 0.9143, \delta = 0.005508
+
+t.test(dat$post_favor_Warren[dat$polknow <= 0.5],
+       dat$post_favor_Warren[dat$polknow > 0.5]) ##t = -3.6516, df = 1600.4, p-value = 0.000269, \delta = 3.85
+
+#####------------------------------------------------------#
+##### Experiment 2: Non-parametric tests ####
+#####------------------------------------------------------#
+
+## real vs. fake clips
+t.test(scores$pct_correct[grepl("real_",scores$video)]*100, 
+       scores$pct_correct[grepl("fake_",scores$video)]*100) ##t = 0.5702, df = 5.8213, p-value = 0.5899, \delta = 0.0720895
+
+## logo vs. no logo clips
+t.test(scores$pct_correct[scores$is_logo], 
+       scores$pct_correct[!scores$is_logo]) ##t = 0.53689, df = 5.9601, p-value = 0.6108, \delta = 0.0603977
+
+## obama missile
+chisq.test(
+table(as.character(dfsurvdat$real_obama_missile[as.character(dfsurvdat$PID) %in% c("Democrat", "Republican") & as.character(dfsurvdat$real_obama_missile) != "I don't know"]),
+      as.character(dfsurvdat$PID[as.character(dfsurvdat$PID) %in% c("Democrat", "Republican") & as.character(dfsurvdat$real_obama_missile) != "I don't know"]))
+) ##X-squared = 333.34, df = 1, p-value < 2.2e-16
+
+## trump apple
+chisq.test(
+table(as.character(dfsurvdat$real_trump_apple[as.character(dfsurvdat$PID) %in% c("Democrat", "Republican") & as.character(dfsurvdat$real_trump_apple) != "I don't know"]),
+      as.character(dfsurvdat$PID[as.character(dfsurvdat$PID) %in% c("Democrat", "Republican") & as.character(dfsurvdat$real_trump_apple) != "I don't know"]))
+) ##X-squared = 75.155, df = 1, p-value < 2.2e-16
+
+## trump covid
+chisq.test(
+table(as.character(dfsurvdat$real_trump_covid[as.character(dfsurvdat$PID) %in% c("Democrat", "Republican") & as.character(dfsurvdat$real_trump_covid) != "I don't know"]),
+      as.character(dfsurvdat$PID[as.character(dfsurvdat$PID) %in% c("Democrat", "Republican") & as.character(dfsurvdat$real_trump_covid) != "I don't know"]))
+) ##X-squared = 169.96, df = 1, p-value < 2.2e-16
+
+
+```
+
+# Our Model
+
+```{r}
+t.test(dat$post_favor_Warren[dat$Ethnicity=="White"],
+       dat$post_favor_Warren[dat$Ethnicity!="White"]) ##t = 53.531, df = 4753, p-value < 2.2e-16, \delta = -42.58104
+```
+
+```{r}
+## obama missile and gender 
+chisq.test(
+table(as.character(dfsurvdat$real_obama_missile[as.character(dfsurvdat$gender) %in% c("Male", "Female") & as.character(dfsurvdat$real_obama_missile) != "I don't know"]),
+      as.character(dfsurvdat$gender[as.character(dfsurvdat$gender) %in% c("Male", "Female") & as.character(dfsurvdat$real_obama_missile) != "I don't know"]))
+) ##X-squared = 14.984, df = 1, p-value = 0.0001102 
+```
+
+# Correlation between Facebook usuage and beleiving the video was a deepfake 
+```{r}
+unique(dfsurvdat$fb_usage)
+```
+
+```{r}
+## obama missile
+chisq.test(
+table(as.character(dfsurvdat$real_obama_missile[as.character(dfsurvdat$fb_usage) %in% c("Less often", "Every few weeks", "1 to 2 days a week", "3 to 6 days a week", "About once a day", "Several times a day", "Pretty much all the time") & as.character(dfsurvdat$real_obama_missile) != "I don't know"]),
+      as.character(dfsurvdat$fb_usage[as.character(dfsurvdat$fb_usage) %in% c("Less often", "Every few weeks", "1 to 2 days a week", "3 to 6 days a week", "About once a day", "Several times a day", "Pretty much all the time") & as.character(dfsurvdat$real_obama_missile) != "I don't know"]))
+) ##X-squared = 4.6801, df = 6, p-value = 0.5854
+
+## trump apple
+chisq.test(
+table(as.character(dfsurvdat$real_trump_apple[as.character(dfsurvdat$fb_usage) %in% c("Less often", "Every few weeks", "1 to 2 days a week", "3 to 6 days a week", "About once a day", "Several times a day", "Pretty much all the time") & as.character(dfsurvdat$real_trump_apple) != "I don't know"]),
+      as.character(dfsurvdat$PID[as.character(dfsurvdat$fb_usage) %in% c("Less often", "Every few weeks", "1 to 2 days a week", "3 to 6 days a week", "About once a day", "Several times a day", "Pretty much all the time") & as.character(dfsurvdat$real_trump_apple) != "I don't know"]))
+) ##X-squared = 76.654, df = 2, p-value < 2.2e-16
+
+## trump covid
+chisq.test(
+table(as.character(dfsurvdat$real_trump_covid[as.character(dfsurvdat$fb_usage) %in% c("Less often", "Every few weeks", "1 to 2 days a week", "3 to 6 days a week", "About once a day", "Several times a day", "Pretty much all the time") & as.character(dfsurvdat$real_trump_covid) != "I don't know"]),
+      as.character(dfsurvdat$fb_usage[as.character(dfsurvdat$fb_usage) %in% c("Less often", "Every few weeks", "1 to 2 days a week", "3 to 6 days a week", "About once a day", "Several times a day", "Pretty much all the time") & as.character(dfsurvdat$real_trump_covid) != "I don't know"]))
+) ##X-squared = 14.242, df = 6, p-value = 0.2704 
+```
+
+# 
+```{r}
+weighted.sd <- function(x, w, na.rm = FALSE) {
+    if (na.rm) {
+        w <- w[i <- !is.na(x)]
+        x <- x[i]
+    }
+    sum.w <- sum(w)
+    sqrt((sum(w*x^2) * sum.w - sum(w*x)^2) / (sum.w^2 - sum(w^2)))
+}
+```
+
+
+```{r}
+arg_list <- list(     
+    make_option(c("--response_quality"), type="character", default="all", 
+        help="Which quality of responses to condition on.",
+        metavar="response_quality"),
+    # make_option(c("--weight"), type="numeric", default=0,
+    #             help="Use weights?",
+    #             metavar="weight"),
+    make_option(c("--show_pdfs"), type="numeric", default=0,
+                help="Show PDFs in real time?",
+                metavar="show_pdfs")
+)
+ARGS <- parse_args(OptionParser(option_list=arg_list))
+
+SHOW_PDFS <- ARGS$show_pdfs
+
+dat$lowq <- FALSE
+dat$lowq[dat$quality_pretreat_duration_tooquick | dat$quality_pretreat_duration_tooslow | dat$quality_demographic_mismatch] <- TRUE
+```
+
+"Less often", "Every few weeks", "1 to 2 days a week", "3 to 6 days a week", "About once a day", "Several times a day", "Pretty much all the time
+
+```{r}
+dfsurvdat$fb_usage <- as.character(dfsurvdat$fb_usage)
+dfsurvdat$fb_usage <- factor(dfsurvdat$fb_usage, levels=c("Less often","Every few weeks","1 to 2 days a week", "3 to 6 days a week", "About once a day", "Several times a day", "Pretty much all the time"))
+
+scores_byfbusage <- dfsurvdat[,c("fb_usage", nofake_vids, lowfake_vids, hifake_vids)] %>%
+    gather(key="video", value="response", -fb_usage) %>%
+    filter(!is.na(as.character(response))) %>%
+    mutate(is_real=grepl("real", video)) %>%
+    mutate(video=gsub("_\\d$", "", video)) %>%
+    mutate(video=ifelse(video=="real_bidenfight", "real_biden_fight", video)) %>%
+    mutate(correct=ifelse(is_real==TRUE & response=="This video is not fake or doctored", 1, 
+                          ifelse(is_real==FALSE & response=="This video is fake or doctored", 1, 0))) %>%
+    mutate(correct=replace_na(correct, 0)) %>%
+    group_by(fb_usage, video) %>%
+    summarise(pct_correct=mean(correct, na.rm=T), .keep = "all") %>% 
+    mutate(video_lbl=case_when(video == "fake_hilary2" ~ "Hillary Clinton\n(fake debate)",
+                               video == "fake_obama_buzzfeed" ~ "Barack Obama\n(fake news announcement)",
+                               video == "real_obama_missile" ~ "Barack Obama\n(Russian president hot mic)",
+                               video == "fake_bernie1" ~ "Bernie Sanders\n(fake debate)",
+                               video == "real_obama_smoking" ~ "Barack Obama\n(smoking hot mic)",
+                               video == "real_warrenbeer" ~ "Elizabeth Warren\n(Instagram beer gaffe)",
+                               video == "real_trump_soup" ~ 'Donald Trump\n("soup" press conference gaffe)',
+                               video == "real_trump_apple" ~ "Donald Trump\n(Apple press conference gaffe)",
+                               video == "real_biden_fight" ~ "Joe Biden\n(town hall 'push-up contest' gaffe)",
+                               video == "fake_boris" ~ "Boris Johnson\n(fake Brexit announcement)",
+                               video == "real_warrenliar" ~ "Elizabeth Warren\n(post-debate hot mic)",
+                               video == "real_biden_stumble" ~ "Joe Biden\n(stutter gaffe)",
+                               video == "real_trump_covid" ~ "Donald Trump\n(COVID-19 precautions announcement)",
+                               video == "fake_trump_aids" ~ "Donald Trump\n(fake AIDS cure announcment)",
+                               video == "fake_trump_resign" ~ "Donald Trump\n(fake resignation announcement)")) %>%
+    as.data.frame()
+
+```
+
+```{r}
+dfsurvdat$fb_usage <- as.character(dfsurvdat$fb_usage)
+dfsurvdat$PID <- factor(dfsurvdat$PID, levels=c("Less often","Every few weeks","1 to 2 days a week", "3 to 6 days a week", "About once a day", "Several times a day", "Pretty much all the time"))
+
+scores_byPID <- dfsurvdat[,c("PID", nofake_vids, lowfake_vids, hifake_vids)] %>%
+    gather(key="video", value="response", -PID) %>%
+    filter(!is.na(as.character(response))) %>%
+    mutate(is_real=grepl("real", video)) %>%
+    mutate(video=gsub("_\\d$", "", video)) %>%
+    mutate(video=ifelse(video=="real_bidenfight", "real_biden_fight", video)) %>%
+    mutate(correct=ifelse(is_real==TRUE & response=="This video is not fake or doctored", 1, 
+                          ifelse(is_real==FALSE & response=="This video is fake or doctored", 1, 0))) %>%
+    mutate(correct=replace_na(correct, 0)) %>%
+    group_by(fb_usage, video) %>%
+    summarise(pct_correct=mean(correct, na.rm=T), .keep = "all") %>% 
+    mutate(video_lbl=case_when(video == "fake_hilary2" ~ "Hillary Clinton\n(fake debate)",
+                               video == "fake_obama_buzzfeed" ~ "Barack Obama\n(fake news announcement)",
+                               video == "real_obama_missile" ~ "Barack Obama\n(Russian president hot mic)",
+                               video == "fake_bernie1" ~ "Bernie Sanders\n(fake debate)",
+                               video == "real_obama_smoking" ~ "Barack Obama\n(smoking hot mic)",
+                               video == "real_warrenbeer" ~ "Elizabeth Warren\n(Instagram beer gaffe)",
+                               video == "real_trump_soup" ~ 'Donald Trump\n("soup" press conference gaffe)',
+                               video == "real_trump_apple" ~ "Donald Trump\n(Apple press conference gaffe)",
+                               video == "real_biden_fight" ~ "Joe Biden\n(town hall 'push-up contest' gaffe)",
+                               video == "fake_boris" ~ "Boris Johnson\n(fake Brexit announcement)",
+                               video == "real_warrenliar" ~ "Elizabeth Warren\n(post-debate hot mic)",
+                               video == "real_biden_stumble" ~ "Joe Biden\n(stutter gaffe)",
+                               video == "real_trump_covid" ~ "Donald Trump\n(COVID-19 precautions announcement)",
+                               video == "fake_trump_aids" ~ "Donald Trump\n(fake AIDS cure announcment)",
+                               video == "fake_trump_resign" ~ "Donald Trump\n(fake resignation announcement)")) %>%
+    as.data.frame()
+
+p_scores_fake2 <- scores_byPID %>% mutate(is_fake=grepl("fake_", video)) %>% filter(is_fake) %>% 
+    mutate(is_fake="fake clips") %>%
+    arrange(desc(PID), -pct_correct) %>% mutate(video_lbl=as_factor(video_lbl)) %>%
+    mutate(PID=case_when(PID == "Democrat" ~ "D",
+                         PID == "Republican" ~ "R",
+                         PID == "Independent" ~ "I")) %>%
+    ggplot(aes(x=video_lbl, y=pct_correct, fill=PID, label=PID)) + 
+    geom_bar(stat="identity", position=position_dodge(width=0.8), width=0.8, color="black") +
+    geom_text(aes(y=pct_correct+0.02), position = position_dodge(width = 0.8), size=2.5) + 
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1)) + 
+    scale_x_discrete(expand=c(-0.1, 0)) +
+    scale_fill_manual(values=c("blue","grey","red")) +
+    coord_flip() +
+    facet_grid(is_fake ~ .) +
+    xlab("") + ylab("") +
+    theme_bw() + 
+        theme(title = element_text(size=5),
+              legend.position = "none",
+              axis.text.x = element_text(size=12),
+              axis.text.y = element_text(size=12),
+              strip.text = element_text(size=16),
+              axis.title.x = element_text(size=14),
+              axis.title.y = element_text(size=14))
+
+p_scores_real2 <- scores_byPID %>% mutate(is_real=grepl("real_", video)) %>% filter(is_real) %>% 
+    mutate(is_real="real clips") %>%
+    mutate(PID=case_when(PID == "Democrat" ~ "D",
+                         PID == "Republican" ~ "R",
+                         PID == "Independent" ~ "I")) %>%
+    arrange(desc(PID), -pct_correct) %>% mutate(video_lbl=as_factor(video_lbl)) %>%
+    ggplot(aes(x=video_lbl, y=pct_correct, fill=PID, label=PID)) + 
+    geom_bar(stat="identity", position=position_dodge(width=0.8), width=0.8, color="black") +
+    geom_text(aes(y=pct_correct+0.02), position = position_dodge(width = 0.8), size=2.5) + 
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1)) + 
+    scale_x_discrete(expand=c(-0.1, 0)) +
+    scale_fill_manual(values=c("blue","grey","red")) +
+    coord_flip() +
+    facet_grid(is_real ~ .) +
+    xlab("") + ylab("% of correct detections") +
+    theme_bw() + 
+        theme(title = element_text(size=5),
+              legend.position = "none",
+              axis.text.x = element_text(size=12),
+              axis.text.y = element_text(size=12),
+              strip.text = element_text(size=16),
+              axis.title.x = element_text(size=14),
+              axis.title.y = element_text(size=14))
+
+pp2 <- cowplot::plot_grid(p_scores_fake2, p_scores_real2, nrow=2, rel_heights = c(1,1.4), align="v")
+
+
+```
+
+```{r}
+dfsurvdat$PID_leaners
+```
+
