@@ -313,7 +313,7 @@ cowplot::save_plot("figures_exploratory/secondstage_byclip_byfake.pdf", plot=pp,
 if(SHOW_PDFS) system("open figures_exploratory/secondstage_byclip_byfake.pdf")
 
 #####------------------------------------------------------#
-##### Second-stage clip performance by partisanship ####
+##### Second-stage clip performance by Facebook Usage (LAURA, WILL, REEM) ####
 #####------------------------------------------------------#
 
 dfsurvdat$fb_usage <- as.character(dfsurvdat$fb_usage)
@@ -351,44 +351,30 @@ scores_byfbusage <- dfsurvdat[,c("fb_usage", nofake_vids, lowfake_vids, hifake_v
 p_scores_fakefb <- scores_byfbusage %>% mutate(is_fake=grepl("fake_", video)) %>% filter(is_fake) %>% 
   mutate(is_fake="fake clips") %>%
   arrange(desc(fb_usage), -pct_correct) %>% mutate(video_lbl=as_factor(video_lbl)) %>%
-  ggplot(aes(x=video_lbl, y=pct_correct, fill=fb_usage, label=fb_usage)) + 
+  ggplot(aes(x=video_lbl, y=pct_correct, fill=fb_usage)) + 
   geom_bar(stat="identity", position=position_dodge(width=0.8), width=0.8, color="black") +
-  geom_text(aes(y=pct_correct+0.02), position = position_dodge(width = 0.8), size=2.5) + 
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) + 
+  scale_y_continuous() + 
   scale_x_discrete(expand=c(-0.1, 0)) +
   coord_flip() +
   facet_grid(is_fake ~ .) +
   xlab("") + ylab("") +
-  theme_bw() + 
-  theme(title = element_text(size=5),
-        legend.position = "none",
-        axis.text.x = element_text(size=12),
-        axis.text.y = element_text(size=12),
-        strip.text = element_text(size=16),
-        axis.title.x = element_text(size=14),
-        axis.title.y = element_text(size=14))
+  theme_bw() 
 
 p_scores_fakefb
 
 p_scores_realfb <- scores_byfbusage %>% mutate(is_real=grepl("real_", video)) %>% filter(is_real) %>% 
   mutate(is_real="real clips") %>%
   arrange(desc(fb_usage), -pct_correct) %>% mutate(video_lbl=as_factor(video_lbl)) %>%
-  ggplot(aes(x=video_lbl, y=pct_correct, fill=fb_usage, label=fb_usage)) + 
+  ggplot(aes(x=video_lbl, y=pct_correct, fill=fb_usage)) + 
   geom_bar(stat="identity", position=position_dodge(width=0.8), width=0.8, color="black") +
-  geom_text(aes(y=pct_correct+0.02), position = position_dodge(width = 0.8), size=2.5) + 
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) + 
+  scale_y_continuous() + 
   scale_x_discrete(expand=c(-0.1, 0)) +
   coord_flip() +
   facet_grid(is_real ~ .) +
   xlab("") + ylab("% of correct detections") +
-  theme_bw() + 
-  theme(title = element_text(size=5),
-        legend.position = "none",
-        axis.text.x = element_text(size=12),
-        axis.text.y = element_text(size=12),
-        strip.text = element_text(size=16),
-        axis.title.x = element_text(size=14),
-        axis.title.y = element_text(size=14))
+  theme_bw() 
+
+p_scores_realfb
 
 
 
