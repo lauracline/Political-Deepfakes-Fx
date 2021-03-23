@@ -376,8 +376,6 @@ p_scores_realfb <- scores_byfbusage %>% mutate(is_real=grepl("real_", video)) %>
 
 p_scores_realfb
 
-
-
 pp2 <- cowplot::plot_grid(p_scores_fakefb, p_scores_realfb, nrow=2, rel_heights = c(1,1.4), align="v")
 
 cowplot::save_plot("figures_exploratory/secondstage_byclip_byfb_usage.pdf", plot=pp2, base_width=6.5, base_height=7)
@@ -874,6 +872,8 @@ dfsurvdat %>%
   )
 ggsave("figures_exploratory/secondstage_fake-vs-happen_obamamissile.pdf", width=9, height=3.25)
 
+## LAURA, WILL, REEM ##
+
 dfsurvdat %>% ## real obama missile by facebook_usage
   filter(!is.na(factor(real_obama_missile))) %>%
   mutate(real_obama_missile = case_when(real_obama_missile == "This video is fake or doctored" ~ "Believed that\nvideo is fake",
@@ -1205,6 +1205,8 @@ chisq.test(
   table(as.character(dfsurvdat$real_obama_missile[as.character(dfsurvdat$PID) %in% c("Democrat", "Republican") & as.character(dfsurvdat$real_obama_missile) != "I don't know"]),
         as.character(dfsurvdat$PID[as.character(dfsurvdat$PID) %in% c("Democrat", "Republican") & as.character(dfsurvdat$real_obama_missile) != "I don't know"]))
 ) ##X-squared = 333.34, df = 1, p-value < 2.2e-16
+
+## LAURA, WILL, REEM ##
 
 ## real obama missile and facebook usage
 chisq.test(
