@@ -888,7 +888,7 @@ dfsurvdat %>% ## real obama missile by facebook_usage
     legend.position = "bottom",
     axis.text.y = element_text(size=14),
     axis.text.x = element_text(size=14),
-    strip.text = element_text(size=18),
+    strip.text = element_text(size=14),
     axis.title.x = element_text(size=18),
     axis.title.y = element_text(size=18)
   )
@@ -908,7 +908,7 @@ dfsurvdat %>% ## Fake hiliary interview by facebook_usage
     legend.position = "bottom",
     axis.text.y = element_text(size=14),
     axis.text.x = element_text(size=14),
-    strip.text = element_text(size=18),
+    strip.text = element_text(size=14),
     axis.title.x = element_text(size=18),
     axis.title.y = element_text(size=18)
   )
@@ -928,7 +928,7 @@ dfsurvdat %>% ## Fake obama buzzfeed by facebook_usage
     legend.position = "bottom",
     axis.text.y = element_text(size=14),
     axis.text.x = element_text(size=14),
-    strip.text = element_text(size=18),
+    strip.text = element_text(size=6),
     axis.title.x = element_text(size=18),
     axis.title.y = element_text(size=18)
   )
@@ -948,7 +948,7 @@ dfsurvdat %>% ## Fake Bernie debate by facebook_usage
     legend.position = "bottom",
     axis.text.y = element_text(size=14),
     axis.text.x = element_text(size=14),
-    strip.text = element_text(size=18),
+    strip.text = element_text(size=6),
     axis.title.x = element_text(size=18),
     axis.title.y = element_text(size=18)
   )
@@ -968,7 +968,7 @@ dfsurvdat %>% ## Fake Trump resign by facebook_usage
     legend.position = "bottom",
     axis.text.y = element_text(size=14),
     axis.text.x = element_text(size=14),
-    strip.text = element_text(size=18),
+    strip.text = element_text(size=6),
     axis.title.x = element_text(size=18),
     axis.title.y = element_text(size=18)
   )
@@ -988,7 +988,7 @@ dfsurvdat %>% ## Real Obama Smoking by facebook_usage
     legend.position = "bottom",
     axis.text.y = element_text(size=14),
     axis.text.x = element_text(size=14),
-    strip.text = element_text(size=18),
+    strip.text = element_text(size=6),
     axis.title.x = element_text(size=18),
     axis.title.y = element_text(size=18)
   )
@@ -1008,7 +1008,7 @@ dfsurvdat %>% ## Real Trump Aids by facebook_usage
     legend.position = "bottom",
     axis.text.y = element_text(size=14),
     axis.text.x = element_text(size=14),
-    strip.text = element_text(size=18),
+    strip.text = element_text(size=6),
     axis.title.x = element_text(size=18),
     axis.title.y = element_text(size=18)
   )
@@ -1028,7 +1028,7 @@ dfsurvdat %>% ## Real Trump Soup by facebook_usage
     legend.position = "bottom",
     axis.text.y = element_text(size=14),
     axis.text.x = element_text(size=14),
-    strip.text = element_text(size=18),
+    strip.text = element_text(size=6),
     axis.title.x = element_text(size=18),
     axis.title.y = element_text(size=18)
   )
@@ -1048,7 +1048,7 @@ dfsurvdat %>% ## Real Warren Beer by facebook_usage
     legend.position = "bottom",
     axis.text.y = element_text(size=14),
     axis.text.x = element_text(size=14),
-    strip.text = element_text(size=18),
+    strip.text = element_text(size=6),
     axis.title.x = element_text(size=18),
     axis.title.y = element_text(size=18)
   )
@@ -1068,7 +1068,7 @@ dfsurvdat %>% ## Real Biden Fight by facebook_usage
     legend.position = "bottom",
     axis.text.y = element_text(size=14),
     axis.text.x = element_text(size=14),
-    strip.text = element_text(size=18),
+    strip.text = element_text(size=6),
     axis.title.x = element_text(size=18),
     axis.title.y = element_text(size=18)
   )
@@ -1108,7 +1108,7 @@ dfsurvdat %>% ## Real Warren Liar by facebook_usage
     legend.position = "bottom",
     axis.text.y = element_text(size=14),
     axis.text.x = element_text(size=14),
-    strip.text = element_text(size=18),
+    strip.text = element_text(size=6),
     axis.title.x = element_text(size=18),
     axis.title.y = element_text(size=18)
   )
